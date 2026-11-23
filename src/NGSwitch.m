@@ -4,20 +4,6 @@
 
 static char kNGBindingKey;
 
-static UIView *NGSwitchOverlayHost(UISwitch *source) {
-    UIView *host = source.superview;
-    // Some settings cells clip their subviews to a narrow content column.  A
-    // 63pt glass switch placed there is reduced to a visible edge only.  Move
-    // the overlay to the first unclipped ancestor and convert coordinates into
-    // that host's space.
-    while (host && host != source.window) {
-        UIView *superview = host.superview;
-        if (!host.clipsToBounds && !(superview && superview.clipsToBounds)) break;
-        host = superview;
-    }
-    return host ?: source.window ?: source.superview;
-}
-
 static NSHashTable<UISwitch *> *NGSeenSwitches(void) {
     static NSHashTable *seen; static dispatch_once_t once;
     dispatch_once(&once, ^{ seen = [NSHashTable weakObjectsHashTable]; }); return seen;
@@ -84,24 +70,24 @@ void NGRefreshSwitch(UISwitch *source) {
         binding.overlay.clipsToBounds = NO;
         objc_setAssociatedObject(source,&kNGBindingKey,binding,OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
-    UIView *parent = NGSwitchOverlayHost(source);
+    // Match DayNightSwitch: embed the custom control inside the native
+    // UISwitch. UIKit owns the switch's frame, bounds, transform, clipping,
+    // and cell layout; no cross-hierarchy coordinate conversion is needed.
+    // The wrapper follows the native switch's exact bounds. The Theseus
+    // control is laid out inside it, so it cannot be clipped or offset.
+    UIView *parent = source;
     if (binding.overlay.superview != parent) {
         [binding.overlay removeFromSuperview];
         [parent addSubview:binding.overlay];
     }
-    // Keep the overlay in the host's coordinate system.  Do not apply the
-    // source transform a second time: convertRect already includes it.
-    CGSize size = CGSizeMake(63, 28);
-    CGRect anchor = [source convertRect:source.bounds toView:parent];
     binding.overlay.transform = CGAffineTransformIdentity;
-    binding.overlay.bounds = (CGRect){CGPointZero, size};
-    binding.overlay.center = CGPointMake(CGRectGetMidX(anchor), CGRectGetMidY(anchor));
+    binding.overlay.frame = source.bounds;
     [parent bringSubviewToFront:binding.overlay];
     binding.overlay.hidden = source.hidden;
     binding.overlay.userInteractionEnabled = source.userInteractionEnabled;
     binding.overlay.alpha = binding.originalAlpha;
     binding.modifyingNative = YES;
-    source.alpha = 0; source.isAccessibilityElement = NO;
+    source.isAccessibilityElement = NO;
     binding.modifyingNative = NO;
     NGSyncSwitch(source, NO);
 }
