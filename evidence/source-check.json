@@ -11,7 +11,7 @@
   "vendor": {
     "files": 37,
     "verified": true,
-    "manifest_sha256": "a10e7c286f82e0eb41c9a0267475a0cab0c2bfeb99c02806511d9eaef14609c3",
+    "manifest_sha256": "c34eb71e57a93708eb025de999d15aa8eb0a779ae119d1de51504d564c5fe426",
     "upstream": {
       "repository": "https://github.com/valzevul/Theseus",
       "revision": "71ca1c127a4e7fe3387361f160c4890dbd427f66",

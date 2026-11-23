@@ -73,9 +73,14 @@ void NGRefreshSwitch(UISwitch *source) {
     if (binding.overlay.superview != parent) { [binding.overlay removeFromSuperview]; [parent insertSubview:binding.overlay aboveSubview:source]; }
     // Preserve the original Theseus 63 x 28 track and Layout defaults.
     CGSize size = CGSizeMake(63,28);
-    CGPoint center = [source convertPoint:CGPointMake(CGRectGetMidX(source.bounds),CGRectGetMidY(source.bounds)) toView:parent];
-    binding.overlay.bounds = (CGRect){CGPointZero,size}; binding.overlay.center = center;
-    binding.overlay.transform = source.transform;
+    // Anchor against the already-transformed source bounds.  Using a converted
+    // midpoint and then applying source.transform again can offset the overlay
+    // when UIKit applies a scale/placement transform during cell layout.
+    CGRect anchor = [source convertRect:source.bounds toView:parent];
+    CGPoint center = CGPointMake(CGRectGetMidX(anchor), CGRectGetMidY(anchor));
+    binding.overlay.transform = CGAffineTransformIdentity;
+    binding.overlay.bounds = (CGRect){CGPointZero,size};
+    binding.overlay.center = center;
     binding.overlay.hidden = source.hidden;
     binding.overlay.userInteractionEnabled = source.userInteractionEnabled;
     binding.overlay.alpha = binding.originalAlpha;
