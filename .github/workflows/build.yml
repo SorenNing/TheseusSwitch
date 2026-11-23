@@ -1,0 +1,53 @@
+name: Build TheseusSwitch
+
+on:
+  workflow_dispatch:
+    inputs:
+      arch:
+        description: Build architecture
+        required: true
+        default: arm64e
+        type: choice
+        options:
+          - arm64e
+          - arm64
+          - all
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-path
+          swiftc --version
+      - name: Static checks
+        run: |
+          make check
+          python3 -m py_compile tools/*.py
+          sh -n packaging/postinst
+      - name: Native build
+        env:
+          SOURCE_DATE_EPOCH: 0
+        run: make build ARCH="${{ inputs.arch }}"
+      - name: Verify distribution
+        if: ${{ inputs.arch != 'all' }}
+        run: make verify ARCH="${{ inputs.arch }}"
+      - name: Upload packages and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: TheseusSwitch-${{ inputs.arch }}
+          if-no-files-found: error
+          path: |
+            dist/*.deb
+            dist/*.sha256
+            dist/*.metadata.json
+            evidence/**

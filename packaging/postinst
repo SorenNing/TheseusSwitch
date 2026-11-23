@@ -1,0 +1,5 @@
+#!/bin/sh
+# dpkg creates every owned directory from data.tar.gz.
+# Deliberately no process signalling or SpringBoard/Preferences restart.
+set -e
+exit 0

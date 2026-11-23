@@ -1,0 +1,36 @@
+{
+  "name": "TheseusSwitch",
+  "package": "com.ning.theseusswitch",
+  "version": "0.1.3",
+  "author": "Ning & Vadim Drobinin",
+  "repository": "https://github.com/valzevul/Theseus",
+  "deployment": "15.0",
+  "frameworks": [
+    "Foundation",
+    "UIKit",
+    "Metal",
+    "MetalKit",
+    "QuartzCore",
+    "CoreGraphics",
+    "CoreVideo",
+    "IOSurface",
+    "Accelerate"
+  ],
+  "variants": {
+    "arm64": {
+      "architecture": "iphoneos-arm64",
+      "scheme": "rootless",
+      "prefix": "var/jb",
+      "subtype": 0,
+      "depends": "firmware (>= 15.0), preferenceloader, mobilesubstrate"
+    },
+    "arm64e": {
+      "architecture": "iphoneos-arm64e",
+      "scheme": "roothide",
+      "prefix": "",
+      "subtype": 2147483650,
+      "depends": "firmware (>= 15.0), preferenceloader, mobilesubstrate, roothide (>= 0.0.1)"
+    }
+  },
+  "source_baseline": "GlassSwitchDock 25cbb795c9f0f645c8a933d7e04da88454912320"
+}

@@ -1,0 +1,12 @@
+Package: com.ning.theseusswitch
+Name: TheseusSwitch
+Version: 0.1.3
+Architecture: iphoneos-arm64e
+Description: Standalone original Theseus switch integration.
+Depends: mobilesubstrate, firmware (>= 15.0), preferenceloader
+Conflicts: com.ning.glassswitchdock, com.ning.switch, com.ning.daynightswitch
+Section: Tweaks
+Icon: file:///usr/share/icons/com.ning.theseusswitch.png
+Maintainer: Ning
+Author: Ning & Vadim Drobinin
+Tag: purpose::extension
