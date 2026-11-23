@@ -84,8 +84,9 @@ def check():
     assert 'private let toggle = TheseusSwitch()' in bridge
     assert not re.search(r'toggle\.(configuration|layout|onTintColor|tintColor)\s*=', bridge)
     native = (ROOT/'src/NGSwitch.m').read_text()
-    assert re.search(r'CGSizeMake\(\s*63(?:\.0)?\s*,\s*28(?:\.0)?\s*\)', native)
-    assert 'binding.overlay.bounds' in native
+    assert 'binding.overlay.bounds = source.bounds' in native
+    assert 'source.alpha = 0.0' in native
+    assert 'convertRect:' not in native
     hooks = (ROOT/'src/Tweak.m').read_text()
     for selector in ('layoutSubviews','didMoveToWindow','didMoveToSuperview','setOn:','setOn:animated:','setEnabled:','setHidden:','setAlpha:','setUserInteractionEnabled:'):
         assert '@selector('+selector+')' in hooks,selector
