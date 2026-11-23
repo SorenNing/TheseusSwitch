@@ -70,18 +70,28 @@ void NGRefreshSwitch(UISwitch *source) {
         binding.overlay.clipsToBounds = NO;
         objc_setAssociatedObject(source,&kNGBindingKey,binding,OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
-    // Match DayNightSwitch: embed the custom control inside the native
-    // UISwitch. UIKit owns the switch's frame, bounds, transform, clipping,
-    // and cell layout; no cross-hierarchy coordinate conversion is needed.
-    // The wrapper follows the native switch's exact bounds. The Theseus
-    // control is laid out inside it, so it cannot be clipped or offset.
-    UIView *parent = source;
+    // Keep Theseus at its original 63x28 size. The native UISwitch is only
+    // the anchor/state source; embedding into UISwitch makes UIKit clip and
+    // resize the Metal view. Walk to an ancestor that can contain the fixed
+    // overlay, then convert the native switch center into that host's space.
+    CGSize size = CGSizeMake(63.0, 28.0);
+    UIView *parent = source.superview;
+    CGRect anchor = parent ? [source convertRect:source.bounds toView:parent] : CGRectZero;
+    while (parent && parent.superview &&
+           (parent.clipsToBounds || !CGRectContainsRect(parent.bounds,
+               CGRectInset(anchor, -size.width * 0.5, -size.height * 0.5)))) {
+        UIView *next = parent.superview;
+        anchor = [source convertRect:source.bounds toView:next];
+        parent = next;
+    }
+    if (!parent) return;
     if (binding.overlay.superview != parent) {
         [binding.overlay removeFromSuperview];
         [parent addSubview:binding.overlay];
     }
     binding.overlay.transform = CGAffineTransformIdentity;
-    binding.overlay.frame = source.bounds;
+    binding.overlay.bounds = (CGRect){CGPointZero, size};
+    binding.overlay.center = CGPointMake(CGRectGetMidX(anchor), CGRectGetMidY(anchor));
     [parent bringSubviewToFront:binding.overlay];
     binding.overlay.hidden = source.hidden;
     binding.overlay.userInteractionEnabled = source.userInteractionEnabled;
