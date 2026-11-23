@@ -67,10 +67,11 @@ final class BackgroundCaptureDraw {
         ctx.scaleBy(x: effectiveScale, y: -effectiveScale)
         ctx.translateBy(x: -region.origin.x, y: -region.origin.y)
 
-        // layer.render(in:), not drawHierarchy: drawHierarchy snapshots the screen,
-        // including this glass's own last frame, and feeds the glass back into itself.
+        // The host glass is hidden by the renderer before capture.  Use UIKit's
+        // hierarchy renderer here so private blur/material layers and long-press
+        // menus are composited instead of becoming a black layer-render result.
         UIGraphicsPushContext(ctx)
-        sourceView.layer.render(in: ctx)
+        sourceView.drawHierarchy(in: sourceView.bounds, afterScreenUpdates: false)
         UIGraphicsPopContext()
         ctx.restoreGState()
         CaptureEdges.extend(

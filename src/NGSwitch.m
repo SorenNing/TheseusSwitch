@@ -3,6 +3,21 @@
 #import <objc/message.h>
 
 static char kNGBindingKey;
+
+static UIView *NGSwitchOverlayHost(UISwitch *source) {
+    UIView *host = source.superview;
+    // Some settings cells clip their subviews to a narrow content column.  A
+    // 63pt glass switch placed there is reduced to a visible edge only.  Move
+    // the overlay to the first unclipped ancestor and convert coordinates into
+    // that host's space.
+    while (host && host != source.window) {
+        UIView *superview = host.superview;
+        if (!host.clipsToBounds && !(superview && superview.clipsToBounds)) break;
+        host = superview;
+    }
+    return host ?: source.window ?: source.superview;
+}
+
 static NSHashTable<UISwitch *> *NGSeenSwitches(void) {
     static NSHashTable *seen; static dispatch_once_t once;
     dispatch_once(&once, ^{ seen = [NSHashTable weakObjectsHashTable]; }); return seen;
@@ -69,18 +84,19 @@ void NGRefreshSwitch(UISwitch *source) {
         binding.overlay.clipsToBounds = NO;
         objc_setAssociatedObject(source,&kNGBindingKey,binding,OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
-    UIView *parent = source.superview;
-    if (binding.overlay.superview != parent) { [binding.overlay removeFromSuperview]; [parent insertSubview:binding.overlay aboveSubview:source]; }
-    // Preserve the original Theseus 63 x 28 track and Layout defaults.
-    CGSize size = CGSizeMake(63,28);
-    // Anchor against the already-transformed source bounds.  Using a converted
-    // midpoint and then applying source.transform again can offset the overlay
-    // when UIKit applies a scale/placement transform during cell layout.
+    UIView *parent = NGSwitchOverlayHost(source);
+    if (binding.overlay.superview != parent) {
+        [binding.overlay removeFromSuperview];
+        [parent addSubview:binding.overlay];
+    }
+    // Keep the overlay in the host's coordinate system.  Do not apply the
+    // source transform a second time: convertRect already includes it.
+    CGSize size = CGSizeMake(63, 28);
     CGRect anchor = [source convertRect:source.bounds toView:parent];
-    CGPoint center = CGPointMake(CGRectGetMidX(anchor), CGRectGetMidY(anchor));
     binding.overlay.transform = CGAffineTransformIdentity;
-    binding.overlay.bounds = (CGRect){CGPointZero,size};
-    binding.overlay.center = center;
+    binding.overlay.bounds = (CGRect){CGPointZero, size};
+    binding.overlay.center = CGPointMake(CGRectGetMidX(anchor), CGRectGetMidY(anchor));
+    [parent bringSubviewToFront:binding.overlay];
     binding.overlay.hidden = source.hidden;
     binding.overlay.userInteractionEnabled = source.userInteractionEnabled;
     binding.overlay.alpha = binding.originalAlpha;

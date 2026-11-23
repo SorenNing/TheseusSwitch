@@ -445,10 +445,10 @@ public class TheseusSwitch: UIControl {
         config.lensChain = usesIOS26Look ? .knob26 : .knob
         config.nativeLens = nativeLens
         config.edgeFeather = Self.glassFeather
-        // Surface capture remains reliable when the host is a transformed UIKit
-        // hierarchy or presents a long-press menu/private material layer. The
-        // layer-rendering path can return an empty/black texture in those hosts.
-        config.captureMethod = .surfaceBased
+        // Prefer the device layer renderer; the renderer now has a surface
+        // capture fallback for hosts whose long-press/menu layers cannot be
+        // rendered by the first backend.
+        config.captureMethod = TheseusCapability.isDeviceSupported ? .layerRendering : .surfaceBased
         config.refraction.magnification = 1.0
         config.refraction.magnificationCenterY = 0
         config.refraction.intensity = 1.1
